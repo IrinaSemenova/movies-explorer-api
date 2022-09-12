@@ -5,6 +5,13 @@ const IncorrectReqError = require('../error/incorrect-req-error');
 const ConflictError = require('../error/conflict-error');
 const NotFoundError = require('../error/not-found-error');
 const { NODE_ENV, JWT_SECRET, JWT_SECRET_DEV } = require('../utils/constant');
+const {
+  notFoundUserError,
+  conflictEmailError,
+  createUserDataError,
+  dataError,
+  successAuth,
+} = require('../utils/textError');
 
 // аутентификация
 module.exports.login = (req, res, next) => {
@@ -14,7 +21,7 @@ module.exports.login = (req, res, next) => {
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : JWT_SECRET_DEV, { expiresIn: '7d' });
       res.cookie('authorization', token, { maxAge: 3600000 * 24 * 7, httpOnly: true })
-        .send({ message: 'Аутентификация прошла успешно' });
+        .send({ message: successAuth });
     })
     .catch(next);
 };
@@ -41,9 +48,9 @@ module.exports.createUser = (req, res, next) => {
         }))
         .catch((err) => {
           if (err.code === 11000) {
-            next(new ConflictError('Пользователь с таким E-Mail уже существует'));
+            next(new ConflictError(conflictEmailError));
           } else if (err.name === 'ValidationError') {
-            next(new IncorrectReqError('Некорректные данные при создании пользователя'));
+            next(new IncorrectReqError(createUserDataError));
           } else {
             next(err);
           }
@@ -60,13 +67,18 @@ module.exports.updateUser = (req, res, next) => {
       if (user) {
         res.send({ data: user });
       } else {
-        throw new NotFoundError('Пользователь не найден');
+        throw new NotFoundError(notFoundUserError);
       }
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new IncorrectReqError('Переданы некорректные данные'));
+        next(new IncorrectReqError(dataError));
         return;
-      } next(err);
+      }
+      if (err.code === 11000) {
+        next(new ConflictError(conflictEmailError));
+        return;
+      }
+      next(err);
     });
 };
