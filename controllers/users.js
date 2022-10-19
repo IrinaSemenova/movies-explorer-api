@@ -21,7 +21,7 @@ module.exports.login = (req, res, next) => {
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : JWT_SECRET_DEV, { expiresIn: '7d' });
       res.cookie('authorization', token, { maxAge: 3600000 * 24 * 7, httpOnly: true })
-        .send({ message: successAuth });
+        .send({ token, message: successAuth });
     })
     .catch(next);
 };
@@ -43,9 +43,10 @@ module.exports.createUser = (req, res, next) => {
       User.create({
         name, email, password: hash,
       })
-        .then(() => res.send({
-          name, email,
-        }))
+        .then((user) => {
+          const { _id } = user;
+          res.send({ _id, name, email });
+        })
         .catch((err) => {
           if (err.code === 11000) {
             next(new ConflictError(conflictEmailError));

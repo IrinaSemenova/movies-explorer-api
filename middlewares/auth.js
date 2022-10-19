@@ -13,7 +13,7 @@ module.exports = (req, res, next) => {
     next(new NotAuthorizationError(reqAuthError));
   }
   // извлечём токен
-  const token = authorization.replace('Bearer ', '');
+  const token = authorization.replace('Bearer', '');
   let payload;
   // попытаемся верифицировать токен
   try {

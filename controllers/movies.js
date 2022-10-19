@@ -13,7 +13,7 @@ const {
 module.exports.getMovies = (req, res, next) => {
   const owner = req.user._id;
   Movie.find({ owner })
-    .then((movies) => res.send({ data: movies }))
+    .then((movies) => res.send(movies))
     .catch(next);
 };
 
@@ -47,7 +47,7 @@ module.exports.createMovie = (req, res, next) => {
     nameEN,
     owner,
   })
-    .then((movie) => res.send({ data: movie }))
+    .then((movie) => res.send(movie))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new IncorrectReqError(dataError));
